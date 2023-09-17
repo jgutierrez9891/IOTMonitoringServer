@@ -103,8 +103,8 @@ def analyze_data_temp():
                 client.publish(topic, message)
                 alerts += 1
 
-    print(len(aggregation), "dispositivos revisados")
-    print(alerts, "alertas enviadas")
+    print(len(aggregation), "dispositivos revisados - nuevo evento")
+    print(alerts, "alertas enviadas - nuevo evento")
 
 
 def on_connect(client, userdata, flags, rc):
