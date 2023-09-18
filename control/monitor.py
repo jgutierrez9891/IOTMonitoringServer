@@ -66,7 +66,7 @@ def analyze_data_temp():
     print("Calculando alertas...")
 
     data = Data.objects.filter(
-        base_time__gte=datetime.now() - timedelta(minutes=10))
+        base_time__gte=datetime.now() - timedelta(hours=1))
     aggregation = data.annotate(check_value=Avg('avg_value')) \
         .select_related('station', 'measurement') \
         .select_related('station__user', 'station__location') \
@@ -80,6 +80,8 @@ def analyze_data_temp():
                 'station__location__state__name',
                 'station__location__country__name')
     alerts = 0
+    print("aggregation")
+    print(aggregation)
     for item in aggregation:
         alert = False
 
@@ -91,6 +93,10 @@ def analyze_data_temp():
         state = item['station__location__state__name']
         city = item['station__location__city__name']
         user = item['station__user__username']
+        print("check value: "+ str(item["check_value"]))
+        print("max_value: "+ str(max_value))
+        print("min_value: "+ str(min_value))
+        print(item)
 
         if variable == 'temperatura':
             if item["check_value"] > max_value or item["check_value"] < min_value:
@@ -154,7 +160,7 @@ def start_cron():
     '''
     print("Iniciando cron...")
     schedule.every(5).minutes.do(analyze_data)
-    schedule.every(5).minutes.do(analyze_data_temp)
+    #schedule.every(5).minutes.do(analyze_data_temp)
     print("Servicio de control iniciado")
     while 1:
         schedule.run_pending()
