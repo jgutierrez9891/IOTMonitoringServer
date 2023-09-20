@@ -58,15 +58,15 @@ def analyze_data():
     print(len(aggregation), "dispositivos revisados")
     print(alerts, "alertas enviadas")
 
-def analyze_data_temp():
-    # Consulta todos los datos de temperatura los últimos 10 minutos y los agrupa por estación
-    # Compara el promedio con los valores límite que están en la base de datos para la temperatura
+def analyze_data_humidity():
+    # Consulta todos los datos de humedad los últimos 10 minutos y los agrupa por estación
+    # Compara el promedio con los valores límite que están en la base de datos para la humedad
     # Si el promedio se excede de los límites, se envia un mensaje de alerta.
 
     print("Calculando alertas...")
 
     data = Data.objects.filter(
-        base_time__gte=datetime.now() - timedelta(hours=1))
+        base_time__gte=datetime.now() - timedelta(minutes=15))
     aggregation = data.annotate(check_value=Avg('avg_value')) \
         .select_related('station', 'measurement') \
         .select_related('station__user', 'station__location') \
@@ -98,19 +98,19 @@ def analyze_data_temp():
         print("min_value: "+ str(min_value))
         print(item)
 
-        if variable == 'temperatura':
+        if variable == 'humedad':
             if item["check_value"] > max_value or item["check_value"] < min_value:
                 alert = True
 
             if alert:
                 message = "ALERT {} {} {}".format(variable, min_value, max_value)
                 topic = '{}/{}/{}/{}/in'.format(country, state, city, user)
-                print(datetime.now(), "Sending temp alert to {}".format(topic))
+                print(datetime.now(), "Sending alert to {} {}".format(topic, variable))
                 client.publish(topic, message)
                 alerts += 1
 
-    print(len(aggregation), "dispositivos revisados - nuevo evento")
-    print(alerts, "alertas enviadas - nuevo evento")
+    print(len(aggregation), "dispositivos revisados")
+    print(alerts, "alertas enviadas")
 
 
 def on_connect(client, userdata, flags, rc):
@@ -160,7 +160,7 @@ def start_cron():
     '''
     print("Iniciando cron...")
     schedule.every(5).minutes.do(analyze_data)
-    #schedule.every(5).minutes.do(analyze_data_temp)
+    schedule.every(5).minutes.do(analyze_data_humidity)
     print("Servicio de control iniciado")
     while 1:
         schedule.run_pending()
